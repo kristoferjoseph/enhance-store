@@ -38,7 +38,7 @@ function merge (o, n) {
  * @param {array} props - list props to listen to for changes
  * @return {number} returns current number of listeners
  */
-const subscribe = (fn, props) => {
+export const subscribe = (fn, props) => {
   fn.observedProperties = props || []
   return listeners.push(fn)
 }
@@ -48,7 +48,7 @@ const subscribe = (fn, props) => {
  * @param {function} fn - function to unsubscribe from state updates
  *
  */
-const unsubscribe = (fn) => {
+export const unsubscribe = (fn) => {
   return listeners.splice(listeners.indexOf(fn), 1)
 }
 
@@ -70,8 +70,6 @@ function notify() {
   dirtyProps.length = 0
 }
 
-_state.subscribe = subscribe
-_state.unsubscribe = unsubscribe
 /**
  * Proxy store for inner state management.
  */

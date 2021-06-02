@@ -4,7 +4,7 @@ import {
   assertEquals,
   assertObjectMatch
 } from 'https://deno.land/std@0.79.0/testing/asserts.ts'
-import Store from './store.js'
+import Store, { subscribe, unsubscribe } from './store.js'
 const test = Deno.test
 
 test('Store', ()=> {
@@ -12,11 +12,11 @@ test('Store', ()=> {
 })
 
 test('subscribe', ()=> {
-  assertExists(Store().subscribe, 'exists')
+  assertExists(subscribe, 'exists')
 })
 
 test('unsubscribe', ()=> {
-  assertExists(Store().unsubscribe, 'exists')
+  assertExists(unsubscribe, 'exists')
 })
 
 test('should initialize with initialState', ()=> {
@@ -33,7 +33,7 @@ test('should initialize with initialState', ()=> {
 test('should subscribe listener', ()=> {
   let store = Store()
   const listener = state => assert(state)
-  store.subscribe(listener)
+  subscribe(listener)
   store.a = 5
 })
 
@@ -43,8 +43,8 @@ test('should unsubscribe listener', ()=> {
     assert(false, 'THIS SHOULD NOT BE CALLED IF UNSUBSCRIBED!')
   }
 
-  store.subscribe(listener)
-  store.unsubscribe(listener)
+  subscribe(listener)
+  unsubscribe(listener)
   store.a = 8
   assert(true, 'unsubscribed')
 })
@@ -59,7 +59,7 @@ test('should update listener with state changed.', ()=> {
   const listener = state => {
     assertObjectMatch(state, { a: 5, b: 2 })
   }
-  store.subscribe(listener)
+  subscribe(listener)
   store.a = 5
 })
 
@@ -72,6 +72,6 @@ test('should update listener with specific state changes.', ()=> {
     assertObjectMatch(state, { c: 33 }, JSON.stringify(state))
   }
   let store = Store(initialState)
-  store.subscribe(listener, ['a', 'c'])
+  subscribe(listener, ['a', 'c'])
   store.c = 33
 })
