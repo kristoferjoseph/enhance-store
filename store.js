@@ -3,15 +3,20 @@ const dirtyProps = []
 const listeners = []
 const set = window &&
   window.requestAnimationFrame
-    ? window.requestAnimationFrame
-    : setTimeout
+  ? window.requestAnimationFrame
+  : setTimeout
 const cancel = window &&
   window.cancelAnimationFrame
   ? window.cancelAnimationFrame
   : clearTimeout
 let timeout
 const handler = {
-  set: function(obj, prop, value) {
+  set: function (obj, prop, value) {
+    if (prop === 'initialize' ||
+        prop === 'subscribe' ||
+        prop === 'unsubscribe') {
+      return false
+    }
     let oldValue = obj[prop]
     if (oldValue !== value) {
       obj[prop] = value
@@ -24,11 +29,31 @@ const handler = {
   }
 }
 
+_state.initialize = initialize
+_state.subscribe = subscribe
+_state.unsubscribe = unsubscribe
 const store = new Proxy(_state, handler)
+
+export default function Store (initialState) {
+  if (initialState) {
+    initialize(initialState)
+  }
+  return store
+}
 
 function merge (o, n) {
   for (let prop in n) {
     o[prop] = n[prop]
+  }
+}
+
+/**
+ * Function for initializing store with existing data
+ * @param {object} initialState - object to be merged with internal state
+ */
+function initialize (initialState) {
+  if (initialState) {
+    merge(_state, initialState)
   }
 }
 
@@ -38,7 +63,7 @@ function merge (o, n) {
  * @param {array} props - list props to listen to for changes
  * @return {number} returns current number of listeners
  */
-export const subscribe = (fn, props) => {
+function subscribe (fn, props) {
   fn.observedProperties = props || []
   return listeners.push(fn)
 }
@@ -48,34 +73,24 @@ export const subscribe = (fn, props) => {
  * @param {function} fn - function to unsubscribe from state updates
  *
  */
-export const unsubscribe = (fn) => {
+function unsubscribe (fn) {
   return listeners.splice(listeners.indexOf(fn), 1)
 }
 
-function notify() {
+function notify () {
   listeners.forEach(fn => {
-    let props = fn.observedProperties
-    let payload = props.length
+    const props = fn.observedProperties
+    const payload = props.length
       ? dirtyProps
-          .filter(key => props.includes(key))
-          .reduce((obj, key) => {
-            return {
-              ...obj,
-              [key]: _state[key]
-            }
+        .filter(key => props.includes(key))
+        .reduce((obj, key) => {
+          return {
+            ...obj,
+            [key]: _state[key]
+          }
         }, {})
-      : _state
+      : { ..._state }
     fn(payload)
   })
   dirtyProps.length = 0
-}
-
-/**
- * Proxy store for inner state management.
- */
-export default function Store(initialState) {
-  if (initialState) {
-    merge(_state, initialState)
-  }
-  return store
 }
